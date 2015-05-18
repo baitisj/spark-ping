@@ -38,17 +38,29 @@ end
 
 def spark(durations)
   return "" unless durations.size > 1
+  maxd = 0
+  mind = 0
   
   ticks=%w[▁ ▂ ▃ ▄ ▅ ▆ ▇]
 
-  range = durations.max - durations.min
-  scale = ticks.length - 1
-  distance = durations.max.to_f / ticks.size
-  
+  if durations.compact.max
+    maxd = durations.compact.max
+  end
+
+  if durations.compact.min
+    mind = durations.compact.min
+  end
+
+  range = maxd - mind
+  distance = maxd / (ticks.size-1)
   str = ''
   durations.each do |val|
-    tick = (val / distance).round - 1
-    str << ticks[tick]
+    if val
+      tick = (val / distance).round(0)
+      str << ticks.at(tick)
+    else
+      str << "X"
+    end
   end
   str
 end
@@ -62,7 +74,8 @@ if __FILE__ == $0
   durations = []
   
   begin
-    PTY.spawn( "ping #{ARGV.join(' ')}" ) do |stdin, stdout, pid|
+    #PTY.spawn( "ping #{ARGV.join(' ')}" ) do |stdin, stdout, pid|
+    PTY.spawn( "./minimal_ping.sh #{ARGV.join(' ')}" ) do |stdin, stdout, pid|
       begin
         stdin.each do |line|
           ## if we see 'usage:' or 'ping: ..' an error probably occurred
@@ -73,11 +86,17 @@ if __FILE__ == $0
             exit 1
           end
           
-          duration = line.scan( /time=(\S+)/ ).last
-          durations << duration.first.to_f unless duration.nil?
-        
+          duration = line.scan( /time=(.*)\ ms/ ).last
+          if duration
+            durations << duration.first.to_f
+          else
+            durations << nil
+          end
           sparkline = spark( durations )
-          output = "#{sparkline} #{durations.last} ms\r"
+          output = "#{sparkline} TIMEOUT ms\r"
+          if durations.last
+            output = "#{sparkline} #{durations.last} ms\r"
+          end
           print output
 
           # if we reach the end of the line, reset and start on next line.
