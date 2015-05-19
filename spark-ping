@@ -73,14 +73,16 @@ if __FILE__ == $0
   (columns,lines) = detect_terminal_size
   durations = []
 
+  pingtime = 500 # milliseconds
+  if RUBY_PLATFORM =~ /linux/ 
+    # Linux platform is different...
+    pingtime = 1  # Seconds(WTF!?)
+  end
+
   minimal_ping = <<-EOM
-    # ping wrapper script from http://superuser.com/a/866045/177165 
-    # Set the variable below to the ping timeout value
-    # In *BSD, this is given in milliseconds
-    # In Linux, try "1"
-    timeout=500
+    # ping wrapper shell script from http://superuser.com/a/866045/177165 
     while :; do
-        ping -W $timeout -c 1 #{ARGV.join(' ')} | grep 'bytes from '
+        ping -W #{pingtime} -c 1 #{ARGV.join(' ')} | grep 'bytes from '
         case $? in
             0 ) sleep 1 ;;
             1 ) echo -e "request timeout" ;;
