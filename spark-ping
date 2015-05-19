@@ -109,7 +109,7 @@ if __FILE__ == $0
             durations << nil
           end
           sparkline = spark( durations )
-          output = "#{sparkline} TIMEOUT ms\r"
+          output = "#{sparkline} TIMEOUT\r"
           if durations.last
             output = "#{sparkline} #{durations.last} ms\r"
           end
